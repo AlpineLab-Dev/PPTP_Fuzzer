@@ -257,11 +257,11 @@ class OutgoingCallRequest(ControlMessage):
         super().__init__(gOutgoingCallRequest, OutgoingCallRequest.SIZE + ControlMessage.SIZE)
         self.CallId = CallID
         self.CallSerialNumber = CallSerialNumber
-        self.minimumBPS = 64
-        self.maximumBPS = 128
-        self.bearerType = 3 # [1, 2, 3]
-        self.framingType = 3 # [1, 2, 3]
-        self.windowSize = 1024
+        self.MinimumBPS = 64
+        self.MaximumBPS = 128
+        self.BearerType = 3 # [1, 2, 3]
+        self.FramingType = 3 # [1, 2, 3]
+        self.WindowSize = 1024
         self.PPD = 64
         self.PhoneNumberLength = 64
         self.Reserved1 = 0
@@ -273,11 +273,11 @@ class OutgoingCallRequest(ControlMessage):
         header = super().build()
         buffer += struct.pack(">H", self.CallId)
         buffer += struct.pack(">H", self.CallSerialNumber)
-        buffer += struct.pack(">I", self.minimumBPS)
-        buffer += struct.pack(">I", self.maximumBPS)
-        buffer += struct.pack(">I", self.bearerType)
-        buffer += struct.pack(">I", self.framingType)
-        buffer += struct.pack(">H", self.windowSize)
+        buffer += struct.pack(">I", self.MinimumBPS)
+        buffer += struct.pack(">I", self.MaximumBPS)
+        buffer += struct.pack(">I", self.BearerType)
+        buffer += struct.pack(">I", self.FramingType)
+        buffer += struct.pack(">H", self.WindowSize)
         buffer += struct.pack(">H", self.PPD)
         buffer += struct.pack(">H", self.PhoneNumberLength)
         buffer += struct.pack(">H", self.Reserved1)
@@ -439,32 +439,32 @@ class IncomingCallConnected(ControlMessage):
 # PNS to PAC
 class CallClearRequest(ControlMessage):
     SIZE = 0x4
-    def __init__(self, packetBytes = None, callid = 1337):
+    def __init__(self, packetBytes = None, CallID = 1337):
         super().__init__(gCallClearRequest, CallClearRequest.SIZE + ControlMessage.SIZE)
         if packetBytes:
-            self.callid = 0
+            self.CallID = 0
             self.reserved1 = 0
             self.fromBytes()
         else:
-            self.callid = callid
+            self.CallID = CallID
             self.reserved1 = 0
 
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.callid)
+        buffer += struct.pack(">H", self.CallID)
         buffer += struct.pack(">H", self.reserved1)
         return header + buffer
     
     def fromBytes(self, bytebuffer):
         items = struct.unpack_from(">H", bytebuffer, ControlMessage.SIZE)
-        self.callid = items[0]
+        self.CallID = items[0]
     
 class CallDisconnectNotify(ControlMessage):
     SIZE = 0x88
     def __init__(self):
         super().__init__(gCallDisconnectNotify, CallDisconnectNotify.SIZE + ControlMessage.SIZE)
-        self.callid = 1337
+        self.CallID = 1337
         self.ResultCode = 0 # [1, 2, 3, 4]
         self.ErrorCode = 0
         self.CauseCode = 0
@@ -474,7 +474,7 @@ class CallDisconnectNotify(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.callid)
+        buffer += struct.pack(">H", self.CallID)
         buffer += struct.pack(">B", self.ResultCode)
         buffer += struct.pack(">B", self.ErrorCode)
         buffer += struct.pack(">H", self.CauseCode)
