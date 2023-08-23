@@ -201,7 +201,7 @@ class StopControlConnectionReply(ControlMessage):
         return header + buffer
     
     def __fromBytes(self, bytebuffer):
-        items = struct.unpack_from(">BBH", bytebuffer, ControlMessage.SIZE)
+        items = struct.unpack_from(">BB", bytebuffer, ControlMessage.SIZE)
         self.ResultCode = items[0]
         self.ErrorCode = items[1]
  
@@ -252,11 +252,11 @@ class EchoReply(ControlMessage):
         self.ErrorCode = items[2]
 
 class OutgoingCallRequest(ControlMessage):
-    SIZE = 0xA0
-    def __init__(self):
+    SIZE = 0x9C
+    def __init__(self, CallID = 2337, CallSerialNumber = 2338):
         super().__init__(gOutgoingCallRequest, OutgoingCallRequest.SIZE + ControlMessage.SIZE)
-        self.CallId = 2337
-        self.CallSerialNumber = 2338
+        self.CallId = CallID
+        self.CallSerialNumber = CallSerialNumber
         self.minimumBPS = 64
         self.maximumBPS = 128
         self.bearerType = 3 # [1, 2, 3]
@@ -339,7 +339,7 @@ class OutgoingCallReply(ControlMessage):
 
 class IncomingCallRequest(ControlMessage):
     SIZE = 0xD0
-    def __init__(self,CallId=1337, CallSerialNumber=1338, CallBearerType=gAnalogAccessSupported, PhysicalChannelId=0, DialedNumberLength=64, DialingNumberLength=64,DialedNumber=64 *b"A", DialingNumber = 64 * b"B", Subaddress= 64 * b"C"):
+    def __init__(self, CallId = 1337, CallSerialNumber =1338, CallBearerType=gAnalogAccessSupported, PhysicalChannelId=0, DialedNumberLength=64, DialingNumberLength=64,DialedNumber=64 *b"A", DialingNumber = 64 * b"B", Subaddress= 64 * b"C"):
         super().__init__(gIncomingCallRequest, IncomingCallRequest.SIZE + ControlMessage.SIZE)
         self.CallId = CallId
         self.CallSerialNumber = CallSerialNumber
@@ -367,7 +367,7 @@ class IncomingCallRequest(ControlMessage):
 
 class IncomingCallReply(ControlMessage):
     SIZE = 0xC
-    def __init__(self,CallId=0x1337, PeersCallId=0x1338, ResultCode=1, ErrorCode=0, PacketRecvWindowSize=64, PacketTransitDelay=32, packetBytes=None):
+    def __init__(self, CallId=1337, PeersCallId=1338, ResultCode=1, ErrorCode=0, PacketRecvWindowSize=64, PacketTransitDelay=32, packetBytes=None):
         super().__init__(gIncomingCallReply, IncomingCallReply.SIZE + ControlMessage.SIZE, packetBytes=packetBytes)
         if packetBytes:
             self.CallId = 0
@@ -423,6 +423,7 @@ class IncomingCallConnected(ControlMessage):
             self.PacketRecvWindowSize = PacketRecvWindowsSize
             self.PacketTransmitDelay = PacketTransmitDelay
             self.FramingType = FramingType
+
     def build(self):
         buffer = b""
         header = super().build()
@@ -435,6 +436,7 @@ class IncomingCallConnected(ControlMessage):
 
         return header + buffer
 
+# PNS to PAC
 class CallClearRequest(ControlMessage):
     SIZE = 0x4
     def __init__(self, packetBytes = None, callid = 1337):
@@ -506,9 +508,10 @@ class WANErrorNotify(ControlMessage):
         buffer += struct.pack(">I", self.AlignmentOverruns)
         return header + buffer
 
+# PNS to PAC
 class SetLinkInfo(ControlMessage):
     SIZE = 0xc
-    def __init__(self, PeersCallID = 1337,SendACCM = 0XFFFFFFFF, ReceiveACCM = 0XFFFFFFFF, packetBytes = None):
+    def __init__(self, PeersCallID = 1337, SendACCM = 0XFFFFFFFF, ReceiveACCM = 0XFFFFFFFF, packetBytes = None):
         super().__init__(gSetLinkInfo, SetLinkInfo.SIZE + ControlMessage.SIZE)
         if packetBytes:
             self.PeersCallID = 0

