@@ -255,7 +255,7 @@ class OutgoingCallRequest(ControlMessage):
     SIZE = 0x9C
     def __init__(self, CallID = 2337, CallSerialNumber = 2338):
         super().__init__(gOutgoingCallRequest, OutgoingCallRequest.SIZE + ControlMessage.SIZE)
-        self.CallId = CallID
+        self.CallID = CallID
         self.CallSerialNumber = CallSerialNumber
         self.MinimumBPS = 64
         self.MaximumBPS = 128
@@ -271,7 +271,7 @@ class OutgoingCallRequest(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.CallId)
+        buffer += struct.pack(">H", self.CallID)
         buffer += struct.pack(">H", self.CallSerialNumber)
         buffer += struct.pack(">I", self.MinimumBPS)
         buffer += struct.pack(">I", self.MaximumBPS)
@@ -290,7 +290,7 @@ class OutgoingCallReply(ControlMessage):
     def __init__(self, CallID = 0, PeersCallID = 0, ResultCode = 0, ErrorCode = 0, CauseCode = 0, ConnectSpeed = 0, WindowSize = 0, PPD = 0, PCID = 0, packetBytes = None):
         super().__init__(gOutgoingCallReply, OutgoingCallReply.SIZE + ControlMessage.SIZE)
         if packetBytes:
-            self.CallId = 0
+            self.CallID = 0
             self.PeersCallID = 0
             self.ResultCode = 0
             self.ErrorCode = 0
@@ -301,7 +301,7 @@ class OutgoingCallReply(ControlMessage):
             self.PCID = 0
             self.fromBytes(packetBytes)
         else:
-            self.CallId = CallID
+            self.CallID = CallID
             self.PeersCallID = PeersCallID
             self.ResultCode = ResultCode
             self.ErrorCode = ErrorCode
@@ -314,7 +314,7 @@ class OutgoingCallReply(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.CallId)
+        buffer += struct.pack(">H", self.CallID)
         buffer += struct.pack(">H", self.PeersCallID)
         buffer += struct.pack(">B", self.ResultCode)
         buffer += struct.pack(">B", self.ErrorCode)
@@ -327,7 +327,7 @@ class OutgoingCallReply(ControlMessage):
     
     def fromBytes(self, bytebuffer):
         items = struct.unpack_from(">HHBBHIHHI", bytebuffer, ControlMessage.SIZE)
-        self.CallId = items[0]
+        self.CallID = items[0]
         self.PeersCallID = items[1]
         self.ResultCode = items[2]
         self.ErrorCode = items[3]
@@ -339,9 +339,9 @@ class OutgoingCallReply(ControlMessage):
 
 class IncomingCallRequest(ControlMessage):
     SIZE = 0xD0
-    def __init__(self, CallId = 1337, CallSerialNumber =1338, CallBearerType=gAnalogAccessSupported, PhysicalChannelId=0, DialedNumberLength=64, DialingNumberLength=64,DialedNumber=64 *b"A", DialingNumber = 64 * b"B", Subaddress= 64 * b"C"):
+    def __init__(self, CallID = 1337, CallSerialNumber =1338, CallBearerType=gAnalogAccessSupported, PhysicalChannelId=0, DialedNumberLength=64, DialingNumberLength=64,DialedNumber=64 *b"A", DialingNumber = 64 * b"B", Subaddress= 64 * b"C"):
         super().__init__(gIncomingCallRequest, IncomingCallRequest.SIZE + ControlMessage.SIZE)
-        self.CallId = CallId
+        self.CallID = CallID
         self.CallSerialNumber = CallSerialNumber
         self.CallBearerType = CallBearerType
         self.PhysicalChannelId = PhysicalChannelId
@@ -354,7 +354,7 @@ class IncomingCallRequest(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.CallId)
+        buffer += struct.pack(">H", self.CallID)
         buffer += struct.pack(">H", self.CallSerialNumber)
         buffer += struct.pack(">I", self.CallBearerType)
         buffer += struct.pack(">I", self.PhysicalChannelId)
@@ -367,11 +367,11 @@ class IncomingCallRequest(ControlMessage):
 
 class IncomingCallReply(ControlMessage):
     SIZE = 0xC
-    def __init__(self, CallId=1337, PeersCallId=1338, ResultCode=1, ErrorCode=0, PacketRecvWindowSize=64, PacketTransitDelay=32, packetBytes=None):
+    def __init__(self, CallID=1337, PeersCallID=1338, ResultCode=1, ErrorCode=0, PacketRecvWindowSize=64, PacketTransitDelay=32, packetBytes=None):
         super().__init__(gIncomingCallReply, IncomingCallReply.SIZE + ControlMessage.SIZE, packetBytes=packetBytes)
         if packetBytes:
-            self.CallId = 0
-            self.PeersCallId = 0
+            self.CallID = 0
+            self.PeersCallID = 0
             self.ResultCode = 0
             self.ErrorCode = 0
             self.PacketRecvWindowSize = 0,
@@ -379,8 +379,8 @@ class IncomingCallReply(ControlMessage):
             self.Reserved1 = 0
             self.fromBytes(packetBytes)
         else:
-            self.CallId = CallId
-            self.PeersCallId = PeersCallId
+            self.CallID = CallID
+            self.PeersCallID = PeersCallID
             self.ResultCode = ResultCode
             self.ErrorCode = ErrorCode
             self.PacketRecvWindowSize = PacketRecvWindowSize,
@@ -390,8 +390,8 @@ class IncomingCallReply(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.CallId)
-        buffer += struct.pack(">H", self.PeersCallId)
+        buffer += struct.pack(">H", self.CallID)
+        buffer += struct.pack(">H", self.PeersCallID)
         buffer += struct.pack(">B", self.ResultCode)
         buffer += struct.pack(">B", self.ErrorCode)
         buffer += struct.pack(">H", self.PacketRecvWindowSize)
@@ -401,8 +401,8 @@ class IncomingCallReply(ControlMessage):
         
     def fromBytes(self, bytebuffer):
         items = struct.unpack_from(">HHBBHHH", bytebuffer, ControlMessage.SIZE)
-        self.CallId = items[0]
-        self.PeersCallId = items[1]
+        self.CallID = items[0]
+        self.PeersCallID = items[1]
         self.ResultCode = items[2]
         self.ErrorCode = items[3]
         self.PacketRecvWindowSize = items[4]
@@ -411,13 +411,13 @@ class IncomingCallReply(ControlMessage):
 
 class IncomingCallConnected(ControlMessage):
     SIZE = 0x10
-    def __init__(self,PeerCallId=1337, ConnectSpeed=1, PacketRecvWindowsSize=64, PacketTransmitDelay=0, FramingType = gAsynchronousFraming, packetBytes=None):
+    def __init__(self,PeerCallID=1337, ConnectSpeed=1, PacketRecvWindowsSize=64, PacketTransmitDelay=0, FramingType = gAsynchronousFraming, packetBytes=None):
         super().__init__(gIncomingCallConnected, IncomingCallConnected.SIZE + ControlMessage.SIZE, packetBytes=packetBytes)
         
         if packetBytes:
             pass
         else:
-            self.PeerCallId = PeerCallId
+            self.PeerCallID = PeerCallID
             self.Reserved1 = 0
             self.ConnectSpeed = ConnectSpeed
             self.PacketRecvWindowSize = PacketRecvWindowsSize
@@ -427,7 +427,7 @@ class IncomingCallConnected(ControlMessage):
     def build(self):
         buffer = b""
         header = super().build()
-        buffer += struct.pack(">H", self.PeerCallId)
+        buffer += struct.pack(">H", self.PeerCallID)
         buffer += struct.pack(">H", self.Reserved1)
         buffer += struct.pack(">I", self.ConnectSpeed)
         buffer += struct.pack(">H", self.PacketRecvWindowSize)

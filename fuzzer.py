@@ -99,9 +99,9 @@ def OutgoingCallTest(client : CtlClient):
         raise ValueError("OutgoingCallTest error ")
 
 def IncomingCallTest(client : CtlClient):
-    newCallId = secrets.randbelow(0x10000)
+    newCallID = secrets.randbelow(0x10000)
     newCallSerial = secrets.randbelow(0x10000)
-    newIncomingCallRequest = IncomingCallRequest(CallId=newCallId, CallSerialNumber=newCallSerial)
+    newIncomingCallRequest = IncomingCallRequest(CallID=newCallID, CallSerialNumber=newCallSerial)
     client.CtlSendMsg(newIncomingCallRequest)
     IncomingCallReply_raw = client.CtlRecvMsg()
     newIncomingCallReply = IncomingCallReply(packetBytes=IncomingCallReply_raw)
@@ -109,7 +109,7 @@ def IncomingCallTest(client : CtlClient):
     if newIncomingCallReply.ResultCode != 1 or newIncomingCallReply.ErrorCode != 0:
         raise ValueError("newIncomingCallRequest/Reply error ")
 
-    newIncomingCallConnected = IncomingCallConnected(newIncomingCallReply.CallId, 64, newIncomingCallReply.PacketRecvWindowSize, newIncomingCallReply.PacketTransitDelay)
+    newIncomingCallConnected = IncomingCallConnected(newIncomingCallReply.CallID, 64, newIncomingCallReply.PacketRecvWindowSize, newIncomingCallReply.PacketTransitDelay)
     client.CtlSendMsg(newIncomingCallConnected)
 
 def CallClearRequestTest(client : CtlClient):
