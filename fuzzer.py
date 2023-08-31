@@ -9,6 +9,8 @@ import uuid
 from packets import *
 from utils import *
 
+logging.basicConfig(level=logging.INFO)
+
 CTL_PORT = 1723
 TEST_SERVER = ""
 
@@ -85,6 +87,7 @@ def startControlSession():
 
     if initializeCtlResponse.ErrorCode != 0 or initializeCtlResponse.ResultCode != 1:
         logging.error("startControlSession error")
+        return None
     return pocClient
 
 
@@ -110,6 +113,7 @@ def echoTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(EchoRequestMsg)
         case 3:
             client.CtlSendMsg(EchoRequestMsg, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def OutgoingCallTest(client: CtlClient, mutate_level: int = 0):
@@ -136,6 +140,7 @@ def OutgoingCallTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(newOutgoingCallRequest)
         case 3:
             client.CtlSendMsg(newOutgoingCallRequest, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def IncomingCallTest(client: CtlClient, mutate_level: int = 0):
@@ -165,34 +170,35 @@ def IncomingCallTest(client: CtlClient, mutate_level: int = 0):
         case 3:
             client.CtlSendMsg(newIncomingCallRequest, random.randint(2, 5))
 
-    IncomingCallReply_raw = client.CtlRecvMsg()
-    newIncomingCallReply = IncomingCallReply(packetBytes=IncomingCallReply_raw)
+    try:
+        IncomingCallReply_raw = client.CtlRecvMsg()
+        newIncomingCallReply = IncomingCallReply(packetBytes=IncomingCallReply_raw)
 
-    if newIncomingCallReply.ResultCode != 1 or newIncomingCallReply.ErrorCode != 0:
-        return
-
-    newIncomingCallConnected = IncomingCallConnected(
-        newIncomingCallReply.CallID,
-        64,
-        newIncomingCallReply.PacketRecvWindowSize,
-        newIncomingCallReply.PacketTransitDelay,
-    )
-    match mutate_level:
-        case 0:
-            client.CtlSendMsg(newIncomingCallConnected)
-        case 1:
-            newIncomingCallConnected.PeerCallID = rand_u16()
-            newIncomingCallConnected.Reserved1 = rand_u16()
-            newIncomingCallConnected.ConnectSpeed = rand_u32()
-            newIncomingCallConnected.PacketRecvWindowSize = rand_u16()
-            newIncomingCallConnected.PacketTransmitDelay = rand_u16()
-            newIncomingCallConnected.FramingType = rand_u32()
-            client.CtlSendMsg(newIncomingCallConnected)
-        case 2:
-            # TODO: Full random
-            client.CtlSendMsg(newIncomingCallConnected)
-        case 3:
-            client.CtlSendMsg(newIncomingCallConnected, random.randint(2, 5))
+        newIncomingCallConnected = IncomingCallConnected(
+            newIncomingCallReply.CallID,
+            64,
+            newIncomingCallReply.PacketRecvWindowSize,
+            newIncomingCallReply.PacketTransitDelay,
+        )
+        match mutate_level:
+            case 0:
+                client.CtlSendMsg(newIncomingCallConnected)
+            case 1:
+                newIncomingCallConnected.PeerCallID = rand_u16()
+                newIncomingCallConnected.Reserved1 = rand_u16()
+                newIncomingCallConnected.ConnectSpeed = rand_u32()
+                newIncomingCallConnected.PacketRecvWindowSize = rand_u16()
+                newIncomingCallConnected.PacketTransmitDelay = rand_u16()
+                newIncomingCallConnected.FramingType = rand_u32()
+                client.CtlSendMsg(newIncomingCallConnected)
+            case 2:
+                # TODO: Full random
+                client.CtlSendMsg(newIncomingCallConnected)
+            case 3:
+                client.CtlSendMsg(newIncomingCallConnected, random.randint(2, 5))
+        client.CtlRecvMsg()
+    except Exception:
+        pass
 
 
 def CallClearRequestTest(client: CtlClient, mutate_level: int = 0):
@@ -210,6 +216,7 @@ def CallClearRequestTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(newCallClearRequest)
         case 3:
             client.CtlSendMsg(newCallClearRequest, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def CallDisconnectNotifyTest(client: CtlClient, mutate_level: int = 0):
@@ -231,6 +238,7 @@ def CallDisconnectNotifyTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(newCallDisconnectNotify)
         case 3:
             client.CtlSendMsg(newCallDisconnectNotify, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def WANErrorNotifyTest(client: CtlClient, mutate_level: int = 0):
@@ -254,6 +262,7 @@ def WANErrorNotifyTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(newWANErrorNotify)
         case 3:
             client.CtlSendMsg(newWANErrorNotify, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def SetLinkInfoTest(client: CtlClient, mutate_level: int = 0):
@@ -273,32 +282,36 @@ def SetLinkInfoTest(client: CtlClient, mutate_level: int = 0):
             client.CtlSendMsg(newSetLinkInfo)
         case 3:
             client.CtlSendMsg(newSetLinkInfo, random.randint(2, 5))
+    client.CtlRecvMsg()
 
 
 def do_stuff():
     client = startControlSession()
 
+    if client is None:
+        return
+
     for _ in range(random.randint(1, 5)):
-        match random.randint(0, 7):
+        match random.randint(0, 6):
             case 0:
-                echoTest(client, random.randint(0, 4))
+                echoTest(client, random.randint(0, 3))
             case 1:
-                OutgoingCallTest(client, random.randint(0, 4))
+                OutgoingCallTest(client, random.randint(0, 3))
             case 2:
-                IncomingCallTest(client, random.randint(0, 4))
+                IncomingCallTest(client, random.randint(0, 3))
             case 3:
                 # 진입 X, PNS to PAC
-                CallClearRequestTest(client, random.randint(0, 4))
+                CallClearRequestTest(client, random.randint(0, 3))
             case 4:
                 # CtlpEngine의 분기까지 진입하나
                 # CallEventCallDisconnectNotify 함수 진입 불가
-                CallDisconnectNotifyTest(client, random.randint(0, 4))
+                CallDisconnectNotifyTest(client, random.randint(0, 3))
             case 5:
                 # CtlpEngine 분기까지 진입
-                WANErrorNotifyTest(client, random.randint(0, 4))
+                WANErrorNotifyTest(client, random.randint(0, 3))
             case 6:
                 # 진입 X, PNS to PAC
-                SetLinkInfoTest(client, random.randint(0, 4))
+                SetLinkInfoTest(client, random.randint(0, 3))
 
     stopControlSession(client)
 
@@ -341,10 +354,10 @@ def main():
             th.join()
 
         try:
-            logging.debug("Health check...")
+            logging.info("Health check...")
             poke_client = CtlClient(TEST_SERVER)
             poke_client.CtlConnect(timeout=1)
-            logging.debug("Server is still healty...")
+            logging.info("Server is still healty...")
         except Exception:
             logging.warning("Server is dead!")
             with open(f"{str(uuid.uuid4())}.log", "wb") as f:
